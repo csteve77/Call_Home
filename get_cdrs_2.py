@@ -65,7 +65,7 @@ while day <= days:
             print (day_b, month, ' : Done!')
         else:
              
-            filename = "CH_"+ str(day) + "_" + str(month_b) + str(year) +str(lob[product])+ ".csv"
+            filename = "CH_"+ str(day) + "_" + str(month) + str(year) +str(lob[product])+ ".csv"
             filename = filename.replace(" ", "")
             con = CONNECTION_ORA(username,passw,host,port,sid)
             oracle = con.connect_ora()
