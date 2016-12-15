@@ -25,7 +25,7 @@ name = ['MODULE_TYPE','CDR_ORIGINATED_FILE_ID','SERVER_ID','CLEAR_CAUSE','RELEAS
 
 #dates = ['ANSWER_TIME','DISCONNECT_TIME','END_COVERAGE','ORIGINATE_TIME','SL_SEIZE_TIME','START_COVERAGE','TRANSACTION_TIME']           
     
-chunk = pd.read_csv('C:/Users/Scian/Desktop/CallHome_20161117.csv',
+chunk = pd.read_csv('C:/Users/scian/Call_Home/Voice_August/CH_01_082016.csv',
                   encoding = 'mbcs', 
                   iterator = True,
                   chunksize = 1000)
@@ -39,7 +39,7 @@ cdr =cdr_a[name]
 pd.set_option('display.width', 100)
 pd.set_option('precision', 2)
 pd.set_option('display.float_format', lambda x: '%14.2f' % x) #displays numeric floats to 2 decimal places 
-cdr = cdr[cdr['PRODUCT_TYPE'] != -1] # eliminates invalid cdrs
+#cdr = cdr[cdr['PRODUCT_TYPE'] != -1] # eliminates invalid cdrs
 data = cdr[cdr['PRODUCT_TYPE'] == 21] # dataframe with data only
 voice = cdr[cdr['PRODUCT_TYPE'] == 13] # dataframe wih voice only
 sms = cdr[cdr['PRODUCT_TYPE'] == 2] # dataframe with sms only
@@ -114,17 +114,22 @@ def bar_plot_nulls(df, xlabel, ylabel, title):
     if max_y >10000:
         major_ticks = np.arange(0,max_y,math.ceil((max_y/20)/10000)*10000)
         minor_ticks = np.arange(0,max_y,(max_y/100))
+        ax.set_yticks(major_ticks)
+        ax.set_yticks(minor_ticks, minor=True)
     elif ((max_y > 500) and (max_y < 10000)): 
         major_ticks = np.arange(0,max_y,math.ceil((max_y/10)/100)*100)
         minor_ticks = np.arange(0,max_y,(max_y/50))
-    elif (max_y < 500) :    
+        ax.set_yticks(major_ticks)
+        ax.set_yticks(minor_ticks, minor=True)
+    elif ((max_y < 500) & (max_y > 0)) :    
         major_ticks = np.arange(0,max_y,math.ceil((max_y/20)/5)*5)
         minor_ticks = np.arange(0,max_y,(max_y/40))
-    ax.set_yticks(major_ticks)
+        ax.set_yticks(major_ticks)
+        ax.set_yticks(minor_ticks, minor=True)
+        
     ax.set_xlabel(xlabel, weight ='bold', fontsize = 13)
     ax.set_ylabel(ylabel, weight = 'bold', fontsize = 13)
     ax.set_title(title + 'Ratio = {}:{}'.format(len(null_counts), cdr.shape[1]), fontsize = 15, weight = 'bold' )
-    ax.set_yticks(minor_ticks, minor=True)
     plt.xticks(range(len(null_counts)), null_counts.keys(), rotation= 90, ha='left')
     plt.margins(0.01,0.02)
     #labels = plt.xticks()
@@ -144,34 +149,9 @@ def remove_low_variance(df):
     final_df = hv.join(non_numeric, how='inner')
     return final_df    
     
-'''
 
-full_values ={}
-null_values ={}
-for key,value in get_all_null_counts(filtered_cdrs_cc0_1).items():
-    if value ==0:
-        full_values[key] = value
-    else:
-        null_values[key] = value
-
-selector = VT()
-new_dataframe = selector.fit_transform(filtered_cdrs_cc0_1)
-'''
 
 ####-----------------------------------To keep-------------------------------------------####
-#############################################################################################
-# map values to float in event_parameter1
-#ep1_map = map_values('EVENT_PARAMETER1',filtered_cdrs )
-#filtered_cdrs_2 = filtered_cdrs.replace({'EVENT_PARAMETER1':ep1_map})
-#print (ep1_map) {'DATA': 1, 'RC': 4, 'SMS': 3, 'VOICE': 2}
-#############################################################################################
-
-# map values to float in event_parameter1
-#ep2 = 0 all columns
-#ep3 = 0 all columns
-#ep14_map = map_values('EVENT_PARAMETER14',filtered_cdrs_cc0 )
-#filtered_cdrs_cc0_2 = filtered_cdrs_cc0_2.replace({'EVENT_PARAMETER2':ep2_map})
-#print (ep14_map)
 #############################################################################################
 
 # the groupby size option of pandas tells us how distributed a variable is by size.
@@ -219,36 +199,30 @@ for each in numeric2.columns:
 #print(grouped.get_group((200204400,1))['EVENT_PARAMETER1'])
 #print(numeric3.columns)
 '''
-
+print (cdr.PRODUCT_TYPE.unique())
 dataframes = {'Data':data,'SMS':sms,'Voice':voice,'Recurring_Charges':rc}
 #plot before we remove columns with all values null
 for k,v in dataframes.items():
-    #bar_plot_nulls(v,'Null Features','Null Count', k +' Features With Nulls. ')
-    #print(k, v.shape)
+    bar_plot_nulls(v,'Null Features','Null Count', k +' Features With Nulls. ')
+    print(k, v.shape)
     dataframes[k] = drop_all_null_cols(v) #drops the columns where all values are null
 
-#print()
-#print('---------------Reduced Dimensions--------------')
-#print()    
+print()
+print('---------------Reduced Dimensions--------------')
+print()    
 
 #plot with columns who have a few null values    
-#for k,v in dataframes.items():    
-    #print(k, v.shape)
-    #bar_plot_nulls(v,'Null Features','Null Count', k +' Features With Nulls. ')
-
+for k,v in dataframes.items():    
+    print(k, v.shape)
+    bar_plot_nulls(v,'Null Features','Null Count', k +' Features With Nulls. ')
+'''
 # writes all cleaned recurring charges to csv file
 #dataframes['Recurring_Charges'] = remove_low_variance(dataframes['Recurring_Charges'])
 #shortcodes = ['SC100','SC121','SC1182','SC112','1' ]
 dataframes['Voice'] = dataframes['Voice'].drop(['EVENT_PARAMETER14','EVENT_PARAMETER16','EVENT_PARAMETER25'], axis =1)
-#The line below drops the null values in event_paraemter_7 but we decided to fill these values with 35600000000 
-#as these are shortcode calss and would like to retain them
-#dataframes['Voice'] = dataframes['Voice'][dataframes['Voice']['EVENT_PARAMETER7'].isin(shortcodes)==False]
-dataframes['Voice'] = dataframes['Voice'].fillna({'EVENT_PARAMETER7':'35600000000',
-                            'EVENT_PARAMETER6' : 0})
-
+dataframes['Voice'] = dataframes['Voice'].fillna({'EVENT_PARAMETER7':'35600000000','EVENT_PARAMETER6' : 0})
 dataframes['Voice']['EVENT_PARAMETER24'] = dataframes['Voice']['EVENT_PARAMETER24'].fillna(method = 'ffill')
 dataframes['Voice'].loc[(dataframes['Voice']['CLEAR_CAUSE'] == 449) , ['DESTINATION']] ='CALL_FAILED_DUE_TO_NO_TARIFF'
-#print(dataframes['Voice'].columns)
 #print()
 #print('-----------------------------------------------')
 #print()
@@ -259,11 +233,10 @@ new_voice = dataframes['Voice']
 #print(dataframes['Voice']['AMOUNT_CHARGED'])
 
 #-----------------------Aggregation per Subscriber_id---------------------------
+#-----------------------BUILD THE NEW DATAFRAME-----------------------------------
 
-#-----------------------BUILD THE DATAFRAME-----------------------------------
-'''
-Need to insert specific date to identify the records per day. useful to remove old values'
-'''
+#Need to insert specific date to identify the records per day. useful to remove old values'
+
 on_net = [9,10]; off_net = [11,12];international = [13]; roaming = [14]
 freephone = [17];shortcodes = [186];received_id = [19,21]; success_cc= [0]; no_credit_cc =[407]
 
@@ -296,8 +269,7 @@ freephone_calls = get_count('CHARGEABLE_SUBS_ID', new_voice,'PRODUCT_ID' , value
 charge_duration = get_count('CHARGEABLE_SUBS_ID', new_voice,'CHARGEABLE_DURATION',agg ='sum')
 amount_charged  = get_count('CHARGEABLE_SUBS_ID', new_voice,'AMOUNT_CHARGED',agg ='sum') 
 
-
-#--------------------FILL THE DATAFRAME-----------------------------------
+#--------------------FILL THE NEW DATAFRAME-----------------------------------
 
 for k,v in call_counts.items():
     voice_agg.loc[(voice_agg['CHARGEABLE_SUBS_ID']== k),['CALL_COUNT']] = v
@@ -339,17 +311,17 @@ for k,v in amount_charged.items():
 voice_agg['FAILED'] = (voice_agg['CALL_COUNT'] - voice_agg['SUCCESSFUL'])
 voice_agg['FAIL_OTHER_REASON'] = (voice_agg['FAILED'] - voice_agg['FAIL_NO_CREDIT']) 
 
-    
+sample = voice_agg.head(50)    
     
 #print(voice_agg)
-#plt.scatter(voice_agg['FAIL_NO_CREDIT'],voice_agg['FAILED'])
+plt.scatter(voice_agg['FAIL_NO_CREDIT'],voice_agg['FAILED'])
 
 scatter_matrix(voice_agg, alpha = 0.1, figsize =(15,15), diagonal = 'kde')
-#voice_agg.hist(figsize =(10,10))
+voice_agg.hist(figsize =(10,10))
 #voice_agg.plot(kind = 'box',layout = (4,4), figsize = (10,10),subplots = True, sharex = False, sharey = False)
-plt.show()
+#plt.show()
 
 
-#print(voice_agg.head(10))
+#print(voice_agg.head(50))
 
-
+'''
